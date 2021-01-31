@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Build AWS Batch environment
+
+Parameters:
+  VPCName:
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - m1.small
+      - m1.large
+    Description: Enter t2.micro, m1.small, or m1.large. Default is t2.micro.
+
+#========VPC========#
+Resources:
+# Create VPC
+  MyVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      Tags:
+      - Key: Name
+        Value: !Join [ "-", [ "cfn" ,"vpc" ] ]
+
+  myComputeEnvironment:
+    Type: "AWS::Batch::ComputeEnvironment"
+    Properties:
+      Type: MANAGED
+      # 作成したIAMから取得
+      ServiceRole: !GetAtt AWSBatchServiceRole.Arn
+      ComputeEnvironmentName: sample-batch-compute-env
+      ComputeResources:
+        Ec2KeyPair: !Ref KeyPair
+        # 最大vcpu数、最大インスタンス数となります
+        MaxvCpus: 256
+        # 最小vcpu 0にすると自動でインスタンスをterminateしてくれる
+        MinvCpus: 0
+        # 起動するインスタンスの希望するvCPUの数
+        DesiredvCpus: 1
+        SecurityGroupIds: !Ref SecurityGroupIds
+        Type: EC2
+        Subnets: !Ref SubnetIds
+        # 作成したVPCから取得
+        InstanceRole: !GetAtt ecsInstanceProfile.Arn
+        InstanceTypes:
+          # 使用するインスタンスタイプ、optimalならおまかせ
+          - optimal
+        Tags: {"Name": "Batch Instance - sample"}
+      State: ENABLED
+
