@@ -330,7 +330,7 @@ Resources:
                     ForwardedValues:
                         QueryString: false
                     SmoothStreaming: false
-                    ViewerProtocolPolicy : redirect-to-https
+                    ViewerProtocolPolicy : https-only
                     TargetOriginId: !Join ["-",[S3, !Ref mys3WebBucket]]
                 DefaultRootObject: index.html
                 Enabled: true
@@ -344,7 +344,7 @@ Resources:
                             !Join ['', ['origin-access-identity/cloudfront/', !Ref CloudFrontOriginAccessIdentity]]
                 ViewerCertificate:
                     AcmCertificateArn: !Ref CertificateArn
-                    MinimumProtocolVersion: TLSv1.2_2019
+                    MinimumProtocolVersion: TLSv1.2_2021
                     SslSupportMethod: sni-only
 
     myCloudFrontHostRecord:
