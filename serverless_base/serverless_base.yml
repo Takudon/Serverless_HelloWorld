@@ -332,3 +332,15 @@ Resources:
                 - !GetAtt myCloudfrontDistribution.DomainName
             TTL: 3600
             Type: CNAME
+
+Outputs:
+    ApplicationSubnetIDs:
+        Description: Subnet IDs which will be used by API Lambda.
+        Value: !Join [",", [!Ref myPrivateSubnet1, !Ref myPrivateSubnet2]]
+        Export: 
+            Name: !Join ["-",[ApplicationSubnetIDs, !Ref Environment, !FindInMap [AWSRegionToRGN, !Ref "AWS::Region", RGN], !Ref ProjectCode]]
+    ApplicationSGIDs:
+        Description: SecurityGroup IDs which will be used by API Lambda.
+        Value: !Ref internalSecurityGroup
+        Export: 
+            Name: !Join ["-",[ApplicationSGIDs, !Ref Environment, !FindInMap [AWSRegionToRGN, !Ref "AWS::Region", RGN], !Ref ProjectCode]]

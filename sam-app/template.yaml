@@ -1,22 +1,58 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  sam-app
+  template-app
+  This template is updated from Hello-World Application which is SAM sample application.
 
-  Sample SAM Template for sam-app
+Parameters:
+  Environment: 
+    Description: An environment type. Development, Validation, Staging, Commercial.
+    Type: String
+    AllowedValues: [dev, val, stg, prod]
+    Default: dev 
+
+  ProjectCode:
+    Description: Project code of system. (ttNNN)
+    Type: String
+    Default: tt005
+
+Mappings:
+  # AWS Region ------------------------------------------
+  AWSRegionToRGN:
+    ap-northeast-1:
+      RGN: apne1
+    us-east-1:
+      RGN: uset1
 
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
-    Timeout: 3
+    Timeout: 25 # Less than API Gateawy maximum timeout (29 sec).
+    Runtime: python3.8
+    Handler: app.lambda_handler
+    VpcConfig: 
+      SubnetIds: 
+        Fn::Split:
+          - ","
+          - Fn::ImportValue: !Sub
+              - ApplicationSubnetIDs-${Environment}-${Region}-${ProjectCode}
+              - Environment: !Ref Environment
+                Region: !FindInMap [AWSRegionToRGN, !Ref "AWS::Region", RGN]
+                ProjectCode: !Ref ProjectCode
+      SecurityGroupIds: 
+        Fn::Split:
+          - ","
+          - Fn::ImportValue: !Sub
+              - ApplicationSGIDs-${Environment}-${Region}-${ProjectCode}
+              - Environment: !Ref Environment
+                Region: !FindInMap [AWSRegionToRGN, !Ref "AWS::Region", RGN]
+                ProjectCode: !Ref ProjectCode
 
 Resources:
   HelloWorldFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       CodeUri: hello_world/
-      Handler: app.lambda_handler
-      Runtime: python3.8
       Events:
         HelloWorld:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
