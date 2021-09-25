@@ -7,16 +7,21 @@ Parameters:
     Environment: 
         Description: An environment type. Development, Validation, Staging, Commercial.
         Type: String
-        AllowedValues: [dev, val, stg, com]
+        AllowedValues: [dev, val, stg, prod]
         Default: dev 
 
     ProjectCode:
         Description: Project code of system. (ttNNN)
         Type: String
         Default: tt002
+    
+    DomainName:
+        Description: Host zone name(needs to be created in Route53).
+        Type: String
+        Default: takudon3.com
 
-    CertificateArn:
-        Description: CertificateArn
+    CloudFrontCertificateArn:
+        Description: CertificateArn for CloudFront.
         Type: String
         Default: arn:aws:acm:us-east-1:914223673445:certificate/98c16ee2-04b5-4ddf-8cdc-fa71ee437faa
 
@@ -68,7 +73,8 @@ Metadata:
                 Label:
                     default: Certificate configuration.
                 Parameters:
-                    - CertificateArn
+                    - DomainName
+                    - CloudFrontCertificateArn
 
 # ===================================================================
 Mappings:
@@ -236,36 +242,6 @@ Resources:
                 - Key: Name
                   Value: !Join ["-",[secGroup,!Ref Environment, !FindInMap [AWSRegionToRGN, !Ref "AWS::Region", RGN], !Ref ProjectCode, internal]]
 
-    httpsSecurityGroup:
-        Type: AWS::EC2::SecurityGroup
-        Properties: 
-            VpcId: !Ref myVpc
-            GroupName: !Join ["-",[secGroup,!Ref Environment, !FindInMap [AWSRegionToRGN, !Ref "AWS::Region", RGN], !Ref ProjectCode, https]]
-            GroupDescription: CommonHttpsSecurityGroup
-            SecurityGroupIngress:
-                - CidrIp: 0.0.0.0/0
-                  IpProtocol: tcp
-                  FromPort: 443
-                  ToPort: 443
-            Tags: 
-                - Key: Name
-                  Value: !Join ["-",[secGroup,!Ref Environment, !FindInMap [AWSRegionToRGN, !Ref "AWS::Region", RGN], !Ref ProjectCode, https]]
-
-    sshSecurityGroup:
-        Type: AWS::EC2::SecurityGroup
-        Properties: 
-            VpcId: !Ref myVpc
-            GroupName: !Join ["-",[secGroup,!Ref Environment, !FindInMap [AWSRegionToRGN, !Ref "AWS::Region", RGN], !Ref ProjectCode, ssh]]
-            GroupDescription: CommonSSHSecurityGroup
-            SecurityGroupIngress:
-                - CidrIp: 106.181.114.149/32
-                  IpProtocol: tcp
-                  FromPort: 22
-                  ToPort: 22
-            Tags: 
-                - Key: Name
-                  Value: !Join ["-",[secGroup,!Ref Environment, !FindInMap [AWSRegionToRGN, !Ref "AWS::Region", RGN], !Ref ProjectCode, ssh]]
-
     # CloudFront + S3
     myS3LogBucket:
         Type: AWS::S3::Bucket
@@ -321,7 +297,7 @@ Resources:
         Properties:
             DistributionConfig:
                 Aliases:
-                    -  !Join ["-",[cloudfront, !Ref Environment, !FindInMap [AWSRegionToRGN, !Ref "AWS::Region", RGN], !Join [".",[!Ref ProjectCode, "{{resolve:ssm:uset1-tt002:1}}" ]]]]
+                    -  !Join ["-",[cloudfront, !Ref Environment, !FindInMap [AWSRegionToRGN, !Ref "AWS::Region", RGN], !Join [".",[!Ref ProjectCode, !Ref DomainName ]]]]
                 DefaultCacheBehavior:
                     AllowedMethods:
                         - GET
@@ -343,15 +319,15 @@ Resources:
                           OriginAccessIdentity:
                             !Join ['', ['origin-access-identity/cloudfront/', !Ref CloudFrontOriginAccessIdentity]]
                 ViewerCertificate:
-                    AcmCertificateArn: !Ref CertificateArn
+                    AcmCertificateArn: !Ref CloudFrontCertificateArn
                     MinimumProtocolVersion: TLSv1.2_2021
                     SslSupportMethod: sni-only
 
     myCloudFrontHostRecord:
         Type: AWS::Route53::RecordSet
         Properties: 
-            HostedZoneName: !Join ["",["{{resolve:ssm:uset1-tt002:1}}", "."]]
-            Name: !Join ["", [!Join ["-",[cloudfront, !Ref Environment, !FindInMap [AWSRegionToRGN, !Ref "AWS::Region", RGN], !Ref ProjectCode]], ".", "{{resolve:ssm:uset1-tt002:1}}", "."]]
+            HostedZoneName: !Join ["",[!Ref DomainName, "."]]
+            Name: !Join ["", [!Join ["-",[www, !Ref Environment, !FindInMap [AWSRegionToRGN, !Ref "AWS::Region", RGN], !Ref ProjectCode]], ".", !Ref DomainName, "."]]
             ResourceRecords:
                 - !GetAtt myCloudfrontDistribution.DomainName
             TTL: 3600
