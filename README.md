@@ -37,7 +37,7 @@ Update now...
 ***
 
 ## Will be updated
-0.4     Attach Custom Domain Name and add security configuration on API gateway.
+0.4     Attach Custom Domain Name and add security configuration on API gateway. Update deploy method.
 0.5     Add sample DynamoDB table and Connection between Lambda and DynamoDB.
 0.6     Add WAF v2 WebACL attatched on CloudFront and API Gateway
 0.7     Add AWS Batch for executing large-scale proccessing(ex: Daily/Monthly batch proccess)

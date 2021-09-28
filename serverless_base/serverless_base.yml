@@ -13,7 +13,7 @@ Parameters:
     ProjectCode:
         Description: Project code of system. (ttNNN)
         Type: String
-        Default: tt002
+        Default: tt000
     
     DomainName:
         Description: Host zone name(needs to be created in Route53).
@@ -297,7 +297,7 @@ Resources:
         Properties:
             DistributionConfig:
                 Aliases:
-                    -  !Join ["-",[cloudfront, !Ref Environment, !FindInMap [AWSRegionToRGN, !Ref "AWS::Region", RGN], !Join [".",[!Ref ProjectCode, !Ref DomainName ]]]]
+                    -  !Join ["-",[www, !Ref Environment, !FindInMap [AWSRegionToRGN, !Ref "AWS::Region", RGN], !Join [".",[!Ref ProjectCode, !Ref DomainName ]]]]
                 DefaultCacheBehavior:
                     AllowedMethods:
                         - GET
@@ -339,8 +339,15 @@ Outputs:
         Value: !Join [",", [!Ref myPrivateSubnet1, !Ref myPrivateSubnet2]]
         Export: 
             Name: !Join ["-",[ApplicationSubnetIDs, !Ref Environment, !FindInMap [AWSRegionToRGN, !Ref "AWS::Region", RGN], !Ref ProjectCode]]
+
     ApplicationSGIDs:
         Description: SecurityGroup IDs which will be used by API Lambda.
         Value: !Ref internalSecurityGroup
         Export: 
             Name: !Join ["-",[ApplicationSGIDs, !Ref Environment, !FindInMap [AWSRegionToRGN, !Ref "AWS::Region", RGN], !Ref ProjectCode]]
+
+    ApplicationDomainName:
+        Description: DomainName which will be used by API Gateway.
+        Value: !Ref DomainName
+        Export: 
+            Name: !Join ["-",[ApplicationDomain, !Ref Environment, !FindInMap [AWSRegionToRGN, !Ref "AWS::Region", RGN], !Ref ProjectCode]]

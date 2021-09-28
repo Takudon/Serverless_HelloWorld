@@ -14,7 +14,17 @@ Parameters:
   ProjectCode:
     Description: Project code of system. (ttNNN)
     Type: String
-    Default: tt005
+    Default: tt000
+
+  APIGatewayCertificateArn:
+    Description: CertificateArn for API Gateway.
+    Type: String
+    Default: 	arn:aws:acm:ap-northeast-1:914223673445:certificate/aebe3600-ec50-4d44-9a68-212e397afdef
+      
+  HostedZoneId:
+    Description: Hosted Zone Id of Rout53 Host Zone.
+    Type: String
+    Default: 	Z08794941H53RUHH0QQFL
 
 Mappings:
   # AWS Region ------------------------------------------
@@ -49,6 +59,21 @@ Globals:
                 ProjectCode: !Ref ProjectCode
 
 Resources:
+  MyApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: api
+      Domain:
+        DomainName: !Join ["-",[api, !Ref Environment, !FindInMap [AWSRegionToRGN, !Ref "AWS::Region", RGN], !Join [".",[!Ref ProjectCode, !Ref DomainName ]]]]
+        CertificateArn: !Ref APIGatewayCertificateArn
+        EndpointConfiguration: REGIONAL
+        Route53:
+          HostedZoneId: !Ref HostedZoneId
+        BasePath:
+          - api
+        SecurityPolicy: TLS_1_2
+          
+
   HelloWorldFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
