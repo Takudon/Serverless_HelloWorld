@@ -242,6 +242,20 @@ Resources:
                 - Key: Name
                   Value: !Join ["-",[secGroup,!Ref Environment, !FindInMap [AWSRegionToRGN, !Ref "AWS::Region", RGN], !Ref ProjectCode, internal]]
 
+    sshSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties: 
+            VpcId: !Ref myVpc
+            GroupName: !Join ["-",[secGroup,!Ref Environment, !FindInMap [AWSRegionToRGN, !Ref "AWS::Region", RGN], !Ref ProjectCode, ssh]]
+            GroupDescription: CommonInternalSecurityGroup
+            SecurityGroupIngress:
+                - CidrIp: !Ref VpcCIDR
+                  IpProtocol: '-1'
+                  FromPort: 22
+            Tags: 
+                - Key: Name
+                  Value: !Join ["-",[secGroup,!Ref Environment, !FindInMap [AWSRegionToRGN, !Ref "AWS::Region", RGN], !Ref ProjectCode, ssh]]
+
     # CloudFront + S3
     myS3LogBucket:
         Type: AWS::S3::Bucket
